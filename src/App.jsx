@@ -1,56 +1,57 @@
+import { useEffect } from "react";
 import { useState } from "react";
-import "./styles.css"
-export default function App(){
-  const [newItem, setNewItem]  = useState("");
-  const [toDos,setToDos] = useState([]);
-  function handleSubmit(e){
-    e.preventDefault();
-    setToDos((currentToDos)=>{
-      return  [
-        ...currentToDos,{
-          id:crypto.randomUUID,title:newItem,completed:false,
-        }
-      ]
-    })
-    setNewItem("");
+import { NewToDoForm } from "./NewToDoForm";
+import "./styles.css";
+import { ToDoList } from "./ToDoList";
+export default function App() {
+  const [toDos, setToDos] = useState(()=>{
+    const localValue = localStorage.getItem("ITEMS");
+    if(localValue == null){
+      return [];
+    }
+    return JSON.parse(localValue);
+  });
+
+  useEffect(()=>{
+    localStorage.setItem("ITEMS",JSON.stringify(toDos))
+  },[toDos])
+
+
+  function addToDo(title) {
+    setToDos((currentToDos) => {
+      return [
+        ...currentToDos,
+        {
+          id: crypto.randomUUID(),
+          title,
+          completed: false,
+        },
+      ];
+    });
   }
 
-  function toggleToDo(id,completed){
-    setToDos((currentToDos)=>{
-      return  currentToDos.map(toDo=>{
-        if(toDo.id === id){
-          return {...toDo,completed};
+  function toggleToDo(id, completed) {
+    setToDos((currentToDos) => {
+      return currentToDos.map((toDo) => {
+        if (toDo.id === id) {
+          return { ...toDo, completed };
         }
         return toDo;
-      })
-    })
+      });
+    });
+  }
+
+  function deleteToDo(id) {
+    setToDos((currentToDos) => {
+      return currentToDos.filter((toDo) => toDo.id !== id);
+    });
   }
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="new-item-form">
-        <div className="form-row">
-            <label htmlFor="item">New Item</label>
-            <input value={newItem} onChange={e=>setNewItem(e.target.value)} type="text" id="item" />
-            <button className="btn">Add Item</button>
-        </div>
-      </form>
+      <NewToDoForm onSubmit={addToDo} />
       <h1 className="header">To do list</h1>
-       <ul className="list">
-          {toDos.map(toDo=>{
-            return <li key={toDo.id}>
-                <label htmlFor="">
-                  <input type="checkbox" onChange={(e)=>{
-                    toggleToDo(toDo.id,e.target.checked)
-                  }} checked={toDo.completed}/>
-                  {toDo.title}
-                </label>
-                <button className="btn btn-danger">Delete</button>
-              </li>
-          })}
-
-
-       </ul>
+      <ToDoList toDos={toDos} toggleToDo={toggleToDo} deleteToDo={deleteToDo} />
     </>
   );
 }
